@@ -1,0 +1,40 @@
+@baseUrl=http://localhost:4000
+
+### @name register
+Post {{baseUrl}}/users/register
+Content-Type: application/json
+
+{
+     "first_name": "Son",
+     "last_name": "Nguyen",
+     "email": "huyson@gmail.com",
+     "password": "asdasd"
+}
+
+### @name login
+Post {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+     "email": "huyson@gmail.com",
+     "password": "asdasd"
+}
+
+### @name refresh-token
+Post {{baseUrl}}/users/refresh-token
+Content-Type: application/json
+
+{
+     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzZjRiZTgxYmZjYTk4ODcxYmM3ZTM3MyIsImVtYWlsIjoiaHV5c29uQGdtYWlsLmNvbSIsImlhdCI6MTY3Njk4NDI2MX0.CWVLVLuBXBEv6_c0fm-zswMeYbGinBolNAkjnXPn1IA"
+}
+
+### @name getProfile
+Post {{baseUrl}}/users/profile
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzZjQ5NGZhZWViMDViMTBkZWVhNTU1ZSIsImVtYWlsIjoiaHV5c29uQGdtYWlsLmNvbSIsImlhdCI6MTY3Njk4MTg0NSwiZXhwIjoxNjc2OTg1NDQ1fQ.DvLQCj91e1Pf4lLy2UlFrvZR-cE_UAEhJcNrTVVQYAY
+
+
+### @name getProfile
+Post {{baseUrl}}/users/logout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzZjQ5NGZhZWViMDViMTBkZWVhNTU1ZSIsImVtYWlsIjoiaHV5c29uQGdtYWlsLmNvbSIsImlhdCI6MTY3Njk3MzcwOCwiZXhwIjoxNjc2OTc3MzA4fQ.g0j8N2HDVIDrYmeSp4jGEDUItHuWn47LumdlB8cp6lk
