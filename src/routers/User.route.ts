@@ -1,4 +1,4 @@
-import { createNewToken, getProfile, login, register, logout } from '@controllers/User.controller'
+import { createNewToken, getProfile, login, register, logout, getFriends } from '@controllers/User.controller'
 import authenticate from '@middlewares/auth.middleware'
 import express, { Router } from 'express'
 
@@ -10,5 +10,6 @@ userRouter.post("/refresh-token", createNewToken)
 userRouter.post("/profile", authenticate(), getProfile)
 userRouter.post("/logout", authenticate(), logout)
 
+userRouter.get('/:userId/friends', authenticate(), getFriends);
 
 export default userRouter

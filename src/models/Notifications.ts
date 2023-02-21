@@ -1,9 +1,10 @@
 import { Schema, model, Document, Types, SchemaTypes } from 'mongoose';
+import { IUser } from './User';
 
 // Định nghĩa interface cho document của collection "notifications"
-interface INotificationDocument extends Document {
-    recipientId: Types.ObjectId;
-    senderId: Types.ObjectId;
+export interface INotificationDocument extends Document {
+    recipient: IUser["_id"];
+    sender: IUser["_id"];
     message: string;
     createdAt: Date;
     updatedAt: Date;
@@ -12,12 +13,12 @@ interface INotificationDocument extends Document {
 
 // Định nghĩa schema cho collection "notifications"
 const NotificationSchema = new Schema<INotificationDocument>({
-    recipientId: {
+    recipient: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    senderId: {
+    sender: {
         type: Schema.Types.ObjectId,
         ref: 'User',
         required: true
@@ -38,4 +39,4 @@ const NotificationSchema = new Schema<INotificationDocument>({
 // Tạo model từ schema
 const NotificationModel = model<INotificationDocument>('Notification', NotificationSchema);
 
-export { NotificationModel, INotificationDocument };
+export default NotificationModel

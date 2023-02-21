@@ -2,8 +2,8 @@ import { IUser } from './User';
 import mongoose, { Document, Model, Schema } from "mongoose";
 
 export interface IRequestFriend extends Document {
-    requesterId: IUser["_id"];
-    recipientId: IUser["_id"];
+    requester: IUser["_id"];
+    recipient: IUser["_id"];
     status: "pending" | "accepted" | "rejected";
     createdAt: Date;
     updatedAt: Date;
@@ -11,12 +11,12 @@ export interface IRequestFriend extends Document {
 
 const RequestFriendSchema: Schema<IRequestFriend> = new Schema(
     {
-        requesterId: {
+        requester: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        recipientId: {
+        recipient: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,

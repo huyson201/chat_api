@@ -6,6 +6,7 @@ import createToken from "@helpers/createToken";
 import createResponse from "@helpers/createReponse";
 import createHttpError from "http-errors";
 import dotenv from 'dotenv'
+import { FriendModel } from '@models/Friend';
 
 dotenv.config()
 
@@ -148,7 +149,13 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
-
+/**
+ *  logout function
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) return next(createHttpError(401, 'Unauthorized'))
@@ -167,10 +174,32 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+
+const getFriends = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.params.userId;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        const friends = await FriendModel.find({ user: userId }).populate('friend', '_id first_name last_name avatar_url');
+        const friendList = friends.map(friend => ({
+            _id: friend.friend._id,
+            first_name: friend.friend.first_name,
+            last_name: friend.friend.last_name,
+            avatar_url: friend.friend.avatar_url
+        }));
+        return res.json({ success: true, friends: friendList });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+}
 export {
     register,
     login,
     createNewToken,
     getProfile,
-    logout
+    logout,
+    getFriends
 }
