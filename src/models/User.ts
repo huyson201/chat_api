@@ -1,5 +1,4 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { IFriend } from "./Friend";
 import bcrypt from 'bcrypt'
 import { color } from "@helpers/constant";
 import randomInt from "@helpers/randomInt";
@@ -11,7 +10,7 @@ export interface IUser extends Document {
     password: string;
     token?: string;
     avatar_url?: string
-    friends: IFriend["user"][];
+    friends: IUser["_id"][];
     createdAt: Date,
     updatedAt: Date
 }
@@ -45,7 +44,7 @@ const UserSchema = new Schema<IUser>({
     friends: [
         {
             type: Schema.Types.ObjectId,
-            ref: "Friend",
+            ref: "User",
         },
     ],
 }, { timestamps: true });

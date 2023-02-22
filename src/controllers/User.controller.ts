@@ -3,10 +3,9 @@ import { NextFunction, Request, Response } from "express"
 import bcrypt from 'bcrypt';
 import User from "@models/User";
 import createToken from "@helpers/createToken";
-import createResponse from "@helpers/createReponse";
+import createResponse from "@helpers/createResponse";
 import createHttpError from "http-errors";
 import dotenv from 'dotenv'
-import { FriendModel } from '@models/Friend';
 
 dotenv.config()
 
@@ -178,23 +177,24 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.params.userId;
-        const user = await User.findById(userId);
+        const user = await User.findById(userId).populate('friends', '_id first_name last_name avatar_url');;
         if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+            return next(createHttpError(404, "User not found"))
         }
-        const friends = await FriendModel.find({ user: userId }).populate('friend', '_id first_name last_name avatar_url');
-        const friendList = friends.map(friend => ({
+        const friendList = user.friends.map(friend => ({
             _id: friend.friend._id,
             first_name: friend.friend.first_name,
             last_name: friend.friend.last_name,
             avatar_url: friend.friend.avatar_url
         }));
-        return res.json({ success: true, friends: friendList });
+        return res.status(200).json(createResponse("Get friends success", true, friendList))
     } catch (error) {
         console.error(error);
-        return res.status(500).json({ success: false, message: 'Internal server error' });
+        return next(createHttpError(500, 'Internal server error'))
+
     }
 }
+
 export {
     register,
     login,

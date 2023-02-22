@@ -1,6 +1,4 @@
 import jwt from 'jsonwebtoken';
-import User from '@models/User';
-import { IUser } from './../models/User';
 import { Request, Response, NextFunction } from "express"
 import { JwtPayload } from '@helpers/createToken';
 import dotenv from 'dotenv'

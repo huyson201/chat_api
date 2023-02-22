@@ -1,9 +1,11 @@
+import paginate from 'mongoose-paginate-v2';
 import { IUser } from './User';
-import mongoose,  {Document} from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 
-export interface IConversation extends Document{
+export interface IConversation extends Document {
     name: string;
     creator: IUser["_id"];
+    members: IUser["_id"][]
     is_group: boolean,
     createdAt: Date,
     updatedAt: Date
@@ -23,9 +25,18 @@ const conversationSchema = new mongoose.Schema<IConversation>({
         ref: 'User',
         required: true,
     },
+    members: [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: "User"
+        }
+    ]
 }, { timestamps: true });
 
-export const ConversationModel = mongoose.model<IConversation>(
+conversationSchema.plugin(paginate)
+const Conversation = mongoose.model<IConversation, mongoose.PaginateModel<IConversation>>(
     'Conversation',
     conversationSchema
 );
+
+export default Conversation

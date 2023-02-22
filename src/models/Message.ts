@@ -1,9 +1,9 @@
 import { IUser } from './User';
 import mongoose, { Document } from 'mongoose';
 import { IConversation } from './Conversation';
-
+import paginate from 'mongoose-paginate-v2';
 export interface IMessage extends Document {
-    conversationId: IConversation["_id"];
+    conversation: IConversation["_id"];
     sender: IUser["_id"];
     content: string;
     createdAt: Date;
@@ -11,7 +11,7 @@ export interface IMessage extends Document {
 }
 
 const messageSchema = new mongoose.Schema<IMessage>({
-    conversationId: {
+    conversation: {
         type: mongoose.Types.ObjectId,
         ref: 'Conversation',
         required: true,
@@ -27,5 +27,8 @@ const messageSchema = new mongoose.Schema<IMessage>({
     }
 }, { timestamps: true });
 
-export const MessageModel = mongoose.model<IMessage>('Message', messageSchema);
+messageSchema.plugin(paginate)
+const Message = mongoose.model<IMessage, mongoose.PaginateModel<IMessage>>('Message', messageSchema);
+
+export default Message
 

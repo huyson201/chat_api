@@ -1,9 +1,10 @@
+import createResponse from '@helpers/createResponse';
 import createHttpError from 'http-errors';
 import { Request, Response, NextFunction } from 'express';
 import RequestFriend from '@models/RequestFriend';
 import User from '@models/User';
-import NotificationModel from '@models/Notifications';
-import { FriendModel } from '@models/Friend';
+import { notificationsQueue } from '@queues/queue';
+
 
 /**
  * Create request friend
@@ -31,41 +32,54 @@ const requestFriend = async (req: Request, res: Response, next: NextFunction) =>
 
         // Tạo notification
         const sender = await User.findById(requester);
-        const recipient = await User.findById(recipientId);
-
         const message = `${sender?.first_name} ${sender?.last_name} đã gửi cho bạn một lời mời kết bạn`;
-        const newNotification = new NotificationModel({ sender: requester, recipient: recipientId, message, type: "friend_request" });
-        await newNotification.save();
+
+        notificationsQueue.add({
+            sender: requester,
+            recipient: recipientId,
+            message
+        })
 
         // Trả về kết quả
-        return res.json({ success: true, message: "Gửi lời mời kết bạn thành công" });
+        return res.json(createResponse("Friend request sent successfully.", true));
     } catch (error) {
         console.log(error);
-        return res.status(500).json({ success: false, message: "Đã có lỗi xảy ra" });
+        return next(createHttpError(500, "Internal server error..."))
     }
 }
 
-
+/**
+ * get requestFriends
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const getRequestFriends = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) return next(createHttpError(401, "Unauthorized"));
-        const currentUser = req.user; // lấy thông tin người dùng hiện tại từ token
+        // lấy thông tin người dùng hiện tại từ token
+        const currentUser = req.user;
 
         const requests = await RequestFriend.find({ recipient: currentUser.id })
             .populate('requester', 'first_name last_name avatar_url')
             .select('_id requester createdAt status')
             .exec();
-
-        res.status(200).json({ success: true, requests: requests });
+        return res.status(200).json(createResponse("Get requests success!", true, requests));
     } catch (err: any) {
-        res.status(500).json({ success: false, message: err.message });
+        return next(createHttpError(500, "Internal server error..."))
     }
 }
 
+/**
+ * update request status
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const updateRequestStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // define message of notification
-        let notifyMessage = ''
 
         // Find the friend request by ID
         const request = await RequestFriend.findById(req.params.id);
@@ -77,8 +91,8 @@ const updateRequestStatus = async (req: Request, res: Response, next: NextFuncti
 
         if (!req.user) return next(createHttpError(401, "Unauthorized"));
 
-        // If requester isn't the current user, return an error response
-        if (request.requester.toString() !== req.user.id) {
+        // If recipient isn't the current user, return an error response
+        if (request.recipient.toString() !== req.user.id) {
             return res.status(403).json({ success: false, message: "Unauthorized access" });
         }
 
@@ -95,40 +109,33 @@ const updateRequestStatus = async (req: Request, res: Response, next: NextFuncti
         const recipient = await User.findById(request.recipient);
         // If the request was accepted, create a new friend record for both users
         if (request.status === "accepted") {
+            // add friend to user
+            requester?.friends.push(recipient)
+            recipient?.friends.push(requester)
 
-            const requesterFriend = new FriendModel({
-                user: requester!._id,
-                friend: recipient!._id,
-            });
-            await requesterFriend.save();
+            // save to database
+            await Promise.all([requester?.save(), recipient?.save()])
 
-            const recipientFriend = new FriendModel({
-                user: recipient!._id,
-                friend: requester!._id,
-            });
+            //create message of notification 
+            let notifyMessage = `${recipient!.first_name} ${recipient!.last_name} accepted your friend request`
 
-            await recipientFriend.save();
-            notifyMessage = `${recipient!.first_name} ${recipient!.last_name} accepted your friend request`
-        }
+            // send notification
+            notificationsQueue.add({
+                sender: request.recipient,
+                recipient: request.requester,
+                message: notifyMessage
+            })
 
-
-        if (request.status === "rejected") {
-            notifyMessage = `${recipient!.first_name} ${recipient!.last_name} rejected your friend request`
 
         }
-
-        // create notification
-        const notification = await NotificationModel.create({
-            recipient: requester!._id,
-            senderId: req.user.id,
-            message: notifyMessage,
-        });
 
         // Return a success response
-        return res.status(200).json({ success: true, message: "Request updated successfully" });
+        return res.json(createResponse("Request updated successfully", true));
+
+
     } catch (error: any) {
         console.error(error.message);
-        res.status(500).json({ success: false, message: "Server error" });
+        return res.json(createHttpError(500, "Server error...!"));
     }
 }
 

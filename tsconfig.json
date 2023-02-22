@@ -24,7 +24,9 @@
       "@routers/*": ["./routers/*"],
       "@middlewares/*": ["./middlewares/*"],
       "@configs/*": ["./configs/*"],
-      "@helpers/*": ["./helpers/*"]
+      "@helpers/*": ["./helpers/*"],
+      "@queues/*": ["./queues/*"],
+      "@redis/*": ["./redis/*"]
     }
   },
   "exclude": ["node_modules", "/**/dist/*"],
