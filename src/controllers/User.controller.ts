@@ -176,18 +176,21 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
 const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.params.userId;
-        const user = await User.findById(userId).populate('friends', '_id first_name last_name avatar_url');;
+        if (!req.user) return next(createHttpError(401, "Unauthorized"))
+        const userId = req.user.id;
+
+        const user = await User.findById(userId).populate({
+            path: "friends",
+            select: "_id first_name last_name avatar_url online_status",
+            options: {
+                sort: { online_status: -1 }
+            }
+        });
         if (!user) {
             return next(createHttpError(404, "User not found"))
         }
-        const friendList = user.friends.map(friend => ({
-            _id: friend.friend._id,
-            first_name: friend.friend.first_name,
-            last_name: friend.friend.last_name,
-            avatar_url: friend.friend.avatar_url
-        }));
-        return res.status(200).json(createResponse("Get friends success", true, friendList))
+
+        return res.status(200).json(createResponse("Get friends success", true, user.friends))
     } catch (error) {
         console.error(error);
         return next(createHttpError(500, 'Internal server error'))
@@ -195,11 +198,35 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const updateOnlineStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) return next(createHttpError(401, "Unauthorized"))
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return next(createHttpError(404, "User not found"));
+        }
+
+        user.online_status = req.body.online_status;
+
+        const updatedUser = await user.save();
+
+        return res.send(updatedUser);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send({ message: 'Server error' });
+    }
+}
+
+
+
+
 export {
     register,
     login,
     createNewToken,
     getProfile,
     logout,
-    getFriends
+    getFriends,
+    updateOnlineStatus
 }

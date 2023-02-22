@@ -92,7 +92,8 @@ const updateMembers = async (req: Request, res: Response, next: NextFunction) =>
  */
 const getConversationsByUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const userId = req.params.userId;
+        if (!req.user) return next(createHttpError(401, "Unauthorized"))
+        const userId = req.user.id;
 
         // Tìm kiếm user trong database bằng id
         const user = await User.findById(userId);
@@ -112,7 +113,13 @@ const getConversationsByUser = async (req: Request, res: Response, next: NextFun
     }
 }
 
-
+/**
+ * delete member of conversation
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const delMember = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { conversationId } = req.params;

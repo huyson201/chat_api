@@ -9,10 +9,11 @@ export interface IUser extends Document {
     email: string;
     password: string;
     token?: string;
-    avatar_url?: string
+    avatar_url?: string;
+    online_status: 'online' | 'offline'
     friends: IUser["_id"][];
-    createdAt: Date,
-    updatedAt: Date
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -36,6 +37,11 @@ const UserSchema = new Schema<IUser>({
     avatar_url: {
         type: String,
         required: false
+    },
+    online_status: {
+        type: String,
+        enum: ["online", "offline"],
+        default: "offline"
     },
     token: {
         type: String,

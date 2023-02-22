@@ -4,11 +4,6 @@ import express, { Router, Request, Response } from 'express'
 
 const messageRouter: Router = express.Router()
 
-
-
-// Import message schema
-const Message = require('./messageSchema');
-
 // Create new message
 messageRouter.post('/', authenticate(), createMessage);
 
