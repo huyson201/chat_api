@@ -1,4 +1,5 @@
 import createResponse from '@helpers/createResponse';
+import logger from '@helpers/logger';
 import Conversation from '@models/Conversation';
 import User from '@models/User';
 import { NextFunction, Request, Response } from 'express';
@@ -37,7 +38,7 @@ const createConversation = async (req: Request, res: Response, next: NextFunctio
 
         return res.status(200).json(createResponse("Create conversation successfully.", true, conversation));
     } catch (err) {
-        console.error(err);
+        logger.error(err)
         return next(createHttpError(500, "Server error!"))
     }
 }
@@ -76,7 +77,8 @@ const updateMembers = async (req: Request, res: Response, next: NextFunction) =>
         res.status(200).json(createResponse("Update successfully", true, conversation));
 
     } catch (error) {
-        console.error(error);
+        logger.error(error)
+
         return next(createHttpError(500, "Server error!"))
 
     }
@@ -107,7 +109,8 @@ const getConversationsByUser = async (req: Request, res: Response, next: NextFun
         res.status(200).json(createResponse("Get conversation successfully", true, conversations));
 
     } catch (error) {
-        console.error(error);
+        logger.error(error)
+
         return next(createHttpError(500, "Server error!"))
 
     }
@@ -147,8 +150,8 @@ const delMember = async (req: Request, res: Response, next: NextFunction) => {
         let updatedConversation = await Conversation.findByIdAndUpdate(conversationId, { $pull: { members: userId } }, { new: true });
         return res.status(200).json(createResponse('User left conversation successfully', true, updatedConversation));
     } catch (error) {
+        logger.error(error)
         return next(createHttpError(500, "Server error!"))
-        return res.status(500).json({ message: 'Server error' });
     }
 }
 export {

@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express"
 import { JwtPayload } from '@helpers/createToken';
 import dotenv from 'dotenv'
 import createHttpError from 'http-errors';
+import logger from '@helpers/logger';
 dotenv.config()
 
 
@@ -48,6 +49,7 @@ const authenticate = () => {
             req.user = user
             return next()
         } catch (error) {
+            logger.error(error)
             return next(createHttpError(500, "Server error...!"))
         }
     }

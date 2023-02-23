@@ -6,6 +6,7 @@ import connectDb from "./database";
 import router from './routers';
 import { serverAdapter } from '@queues/queue';
 
+
 const app: Express = express()
 const server: http.Server = http.createServer(app)
 const PORT = process.env.PORT || 4000

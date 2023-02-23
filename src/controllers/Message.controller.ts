@@ -1,4 +1,5 @@
 import createResponse from '@helpers/createResponse';
+import logger from '@helpers/logger';
 import Conversation from '@models/Conversation';
 import Message from '@models/Message';
 import { NextFunction, Request, Response } from 'express';
@@ -34,7 +35,8 @@ const createMessage = async (req: Request, res: Response, next: NextFunction) =>
         return res.status(201).json(createResponse("Create message successfully.", true, message));
     } catch (error) {
         // Handle errors
-        console.error(error);
+        logger.error(error)
+
         return next(createHttpError(500, "server error."))
     }
 }
@@ -78,7 +80,7 @@ const getMessageList = async (req: Request, res: Response, next: NextFunction) =
         // Trả về kết quả
         res.status(200).json(createResponse("success", true, result));
     } catch (error) {
-        console.error(error);
+        logger.error(error)
         res.status(500).json({ message: 'Internal server error' });
     }
 };

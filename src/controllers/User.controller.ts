@@ -6,6 +6,7 @@ import createToken from "@helpers/createToken";
 import createResponse from "@helpers/createResponse";
 import createHttpError from "http-errors";
 import dotenv from 'dotenv'
+import logger from '@helpers/logger';
 
 dotenv.config()
 
@@ -38,7 +39,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         res.json(createResponse("Created!", true, { ...newUser.toJSON(), ...token }));
 
     } catch (error: any) {
-        console.log(error)
+        logger.error(error)
         return next(createHttpError(500, "server error..."))
     }
 
@@ -79,7 +80,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
         res.json(createResponse("Login success!", true, { ...user.toJSON(), ...token }));
     } catch (error: any) {
-        console.log(error.message);
+        logger.error(error)
         return next(createHttpError(500, "server error...!"))
     }
 }
@@ -119,7 +120,8 @@ const createNewToken = async (req: Request, res: Response, next: NextFunction) =
 
         return res.status(200).json(createResponse("Create new token success!", true, { ...token }));
     } catch (err) {
-        console.error(err);
+        logger.error(err)
+
         return next(createHttpError(401, 'Invalid refresh token'))
     }
 }
@@ -143,7 +145,8 @@ const getProfile = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).json(createResponse("success", true, { ...user.toJSON() }))
 
     } catch (error) {
-        console.log(error)
+        logger.error(error)
+
         return next(createHttpError(500, 'Server error...!'))
     }
 }
@@ -168,12 +171,19 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
         return res.status(200).json(createResponse("Logout success!", true))
     }
     catch (error: any) {
-        console.log(error)
+        logger.error(error)
         return next(createHttpError(500, 'Server error...!'))
     }
 }
 
 
+/**
+ *  get list friends of user
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) return next(createHttpError(401, "Unauthorized"))
@@ -192,12 +202,20 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
 
         return res.status(200).json(createResponse("Get friends success", true, user.friends))
     } catch (error) {
-        console.error(error);
+        logger.error(error)
+
         return next(createHttpError(500, 'Internal server error'))
 
     }
 }
 
+/**
+ * update online status
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const updateOnlineStatus = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) return next(createHttpError(401, "Unauthorized"))
@@ -218,7 +236,24 @@ const updateOnlineStatus = async (req: Request, res: Response, next: NextFunctio
     }
 }
 
+const getOnlineFriends = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        if (!req.user) {
+            return next(createHttpError(401, 'Unauthorized'))
+        }
 
+        const onlineFriends = await User.findById(req.user.id)
+            .populate({
+                path: "friends",
+                match: { online_status: 'online' },
+                select: "_id first_name last_name avatar_url online_status"
+            })
+        return res.json(createResponse("success", true, onlineFriends));
+    } catch (err) {
+        logger.error(err)
+        return next(createHttpError(500, "Internal server error"))
+    }
+}
 
 
 export {
@@ -228,5 +263,6 @@ export {
     getProfile,
     logout,
     getFriends,
-    updateOnlineStatus
+    updateOnlineStatus,
+    getOnlineFriends
 }

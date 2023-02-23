@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import RequestFriend from '@models/RequestFriend';
 import User from '@models/User';
 import { notificationsQueue } from '@queues/queue';
+import logger from '@helpers/logger';
 
 
 /**
@@ -43,7 +44,7 @@ const requestFriend = async (req: Request, res: Response, next: NextFunction) =>
         // Trả về kết quả
         return res.json(createResponse("Friend request sent successfully.", true));
     } catch (error) {
-        console.log(error);
+        logger.error(error)
         return next(createHttpError(500, "Internal server error..."))
     }
 }
@@ -67,6 +68,7 @@ const getRequestFriends = async (req: Request, res: Response, next: NextFunction
             .exec();
         return res.status(200).json(createResponse("Get requests success!", true, requests));
     } catch (err: any) {
+        logger.error(err)
         return next(createHttpError(500, "Internal server error..."))
     }
 }
@@ -134,7 +136,7 @@ const updateRequestStatus = async (req: Request, res: Response, next: NextFuncti
 
 
     } catch (error: any) {
-        console.error(error.message);
+        logger.error(error)
         return res.json(createHttpError(500, "Server error...!"));
     }
 }
