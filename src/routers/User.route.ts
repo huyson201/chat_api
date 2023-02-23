@@ -1,13 +1,18 @@
 import { getConversationsByUser } from '@controllers/Conversation.controller'
 import { createNewToken, getProfile, login, register, logout, getFriends, updateOnlineStatus, getOnlineFriends } from '@controllers/User.controller'
 import authenticate from '@middlewares/auth.middleware'
+import {
+    loginValidation,
+    refreshTokenValidation,
+    registerValidation
+} from '@middlewares/paramsRules.middleware'
 import express, { Router } from 'express'
 
 const userRouter: Router = express.Router()
 
-userRouter.post("/register", register)
-userRouter.post("/login", login)
-userRouter.post("/refresh-token", createNewToken)
+userRouter.post("/register", registerValidation, register)
+userRouter.post("/login", loginValidation, login)
+userRouter.post("/refresh-token", refreshTokenValidation, createNewToken)
 userRouter.get("/profile", authenticate(), getProfile)
 userRouter.post("/logout", authenticate(), logout)
 userRouter.put("/online-status", authenticate(), updateOnlineStatus)

@@ -15,9 +15,7 @@ import createHttpError from 'http-errors';
  */
 const createConversation = async (req: Request, res: Response, next: NextFunction) => {
     const { creator_id, members } = req.body;
-    if (!Array.isArray(members) || members.length <= 0) {
-        return next(createHttpError(400, "Members required."))
-    }
+
     try {
         // Find creator user
         const creatorUser = await User.findById(creator_id);
