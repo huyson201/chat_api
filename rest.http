@@ -12,7 +12,7 @@ Content-Type: application/json
 }
 
 ### @name login
-Post {{baseUrl}}/users/login
+Post {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
@@ -21,12 +21,9 @@ Content-Type: application/json
 }
 
 ### @name refresh-token
-Post {{baseUrl}}/users/refresh-token
+Post {{baseUrl}}/auth/refresh-token
 Content-Type: application/json
 
-{
-     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYzZjRiZTgxYmZjYTk4ODcxYmM3ZTM3MyIsImVtYWlsIjoiaHV5c29uQGdtYWlsLmNvbSIsImlhdCI6MTY3Njk4NDI2MX0.CWVLVLuBXBEv6_c0fm-zswMeYbGinBolNAkjnXPn1IA"
-}
 
 ### @name getProfile
 GET  {{baseUrl}}/users/profile

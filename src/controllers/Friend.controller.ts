@@ -3,7 +3,7 @@ import createHttpError from 'http-errors';
 import { Request, Response, NextFunction } from 'express';
 import RequestFriend from '@models/RequestFriend';
 import User from '@models/User';
-import { notificationsQueue } from '@queues/queue';
+// import { notificationsQueue } from '@queues/queue';
 import logger from '@helpers/logger';
 
 
@@ -35,11 +35,11 @@ const requestFriend = async (req: Request, res: Response, next: NextFunction) =>
         const sender = await User.findById(requester);
         const message = `${sender?.first_name} ${sender?.last_name} đã gửi cho bạn một lời mời kết bạn`;
 
-        notificationsQueue.add({
-            sender: requester,
-            recipient: recipientId,
-            message
-        })
+        // notificationsQueue.add({
+        //     sender: requester,
+        //     recipient: recipientId,
+        //     message
+        // })
 
         // Trả về kết quả
         return res.json(createResponse("Friend request sent successfully.", true));
@@ -122,11 +122,11 @@ const updateRequestStatus = async (req: Request, res: Response, next: NextFuncti
             let notifyMessage = `${recipient!.first_name} ${recipient!.last_name} accepted your friend request`
 
             // send notification
-            notificationsQueue.add({
-                sender: request.recipient,
-                recipient: request.requester,
-                message: notifyMessage
-            })
+            // notificationsQueue.add({
+            //     sender: request.recipient,
+            //     recipient: request.requester,
+            //     message: notifyMessage
+            // })
 
 
         }

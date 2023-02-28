@@ -35,8 +35,10 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         const token = createToken(newUser);
         newUser.token = token.refresh_token
         await newUser.save()
+        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
+        res.cookie("auth.refresh_token", token.access_token, { httpOnly: true })
 
-        res.json(createResponse("Created!", true, { ...newUser.toJSON(), ...token }));
+        res.json(createResponse("Created!", true, { ...newUser.toJSON() }));
 
     } catch (error: any) {
         logger.error(error)
@@ -66,6 +68,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         // Kiểm tra mật khẩu
+        if (!user.password || user.password === '') {
+            return next(createHttpError(400, 'Invalid password'))
+
+        }
         const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if (!isPasswordCorrect) {
             return next(createHttpError(400, 'Invalid password'))
@@ -78,7 +84,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         user.token = token.refresh_token
         await user.save()
 
-        res.json(createResponse("Login success!", true, { ...user.toJSON(), ...token }));
+        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
+        res.cookie("auth.refresh_token", token.refresh_token, { httpOnly: true })
+        res.json(createResponse("Login success!", true, { ...user.toJSON() }));
+
     } catch (error: any) {
         logger.error(error)
         return next(createHttpError(500, "server error...!"))
@@ -93,9 +102,10 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
  * @returns 
  */
 const createNewToken = async (req: Request, res: Response, next: NextFunction) => {
-    const { refresh_token } = req.body;
+    const refresh_token = req.cookies["auth.refresh_token"];
 
     try {
+        if (!refresh_token || refresh_token === '') return next(createHttpError(401, "Unauthorized"))
 
         // Verify the refresh token
         const decoded = jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET_KEY!) as { id: string, email: string };
@@ -117,8 +127,9 @@ const createNewToken = async (req: Request, res: Response, next: NextFunction) =
 
         user.token = token.refresh_token
         await user.save()
-
-        return res.status(200).json(createResponse("Create new token success!", true, { ...token }));
+        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
+        res.cookie("auth.refresh_token", token.refresh_token, { httpOnly: true })
+        return res.status(200).json(createResponse("Create new token success!", true));
     } catch (err) {
         logger.error(err)
 
@@ -168,6 +179,8 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
         user.token = ''
         await user.save()
+        res.clearCookie("auth.access_token")
+        res.clearCookie("auth.refresh_token")
         return res.status(200).json(createResponse("Logout success!", true))
     }
     catch (error: any) {

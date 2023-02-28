@@ -3,6 +3,8 @@ import cors from 'cors'
 import morgan from 'morgan'
 import dotenv from 'dotenv'
 import rateLimit from 'express-rate-limit'
+import passport from 'passport';
+import cookieParser from 'cookie-parser'
 dotenv.config()
 
 const limiter = rateLimit({
@@ -14,11 +16,17 @@ const limiter = rateLimit({
 });
 
 const serverConfig = (app: Express) => {
-    app.use(cors())
+    app.use(cors({
+        credentials: true,
+        origin: "http://localhost:3000"
+    }))
     app.use(express.json())
     app.use(express.urlencoded({ extended: false }))
+    app.use(cookieParser('cookies'))
     app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
-    app.use(limiter)
+
+    // app.use(limiter)
+    app.use(passport.initialize())
 }
 
 export default serverConfig

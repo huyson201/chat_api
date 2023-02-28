@@ -4,8 +4,8 @@ import express, { Express, Request, Response, ErrorRequestHandler, NextFunction 
 import http from 'http'
 import connectDb from "./database";
 import router from './routers';
-import { serverAdapter } from '@queues/queue';
-
+// import { serverAdapter } from '@queues/queue';
+import "@configs/passport";
 
 const app: Express = express()
 const server: http.Server = http.createServer(app)
@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 4000
 serverConfig(app)
 
 // use bull-board
-app.use("/queues", serverAdapter.getRouter())
+// app.use("/queues", serverAdapter.getRouter())
 
 // configs router
 router(app)
