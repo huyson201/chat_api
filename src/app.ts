@@ -22,8 +22,10 @@ router(app)
 
 // Handle errors.
 const errorHandle: ErrorRequestHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+    let errors = err.errors || null
+
     res.status(err.status || 500)
-    res.json(createResponse(err.message, false, null));
+    res.json(createResponse(err.message, false, null, errors));
 
 }
 app.use(errorHandle);

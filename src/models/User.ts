@@ -12,7 +12,6 @@ export interface IUser extends Document {
     token?: string
     avatar_url?: string;
     online_status: 'online' | 'offline'
-    friends: IUser["_id"][]
     googleId?: string
     createdAt?: Date;
     updatedAt?: Date;
@@ -61,13 +60,7 @@ const UserSchema = new Schema<IUser, IFindOrCreate<IUser>>({
     token: {
         type: String,
         required: false
-    },
-    friends: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        },
-    ],
+    }
 }, {
     timestamps: true,
     statics: {

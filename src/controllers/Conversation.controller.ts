@@ -1,6 +1,7 @@
 import createResponse from '@helpers/createResponse';
 import logger from '@helpers/logger';
 import Conversation from '@models/Conversation';
+import Friend from '@models/Fiend';
 import User from '@models/User';
 import { NextFunction, Request, Response } from 'express';
 import createHttpError from 'http-errors';
@@ -90,29 +91,62 @@ const updateMembers = async (req: Request, res: Response, next: NextFunction) =>
  * @param next 
  * @returns 
  */
-const getConversationsByUser = async (req: Request, res: Response, next: NextFunction) => {
+export const getConversations = async (req: Request, res: Response, next: NextFunction) => {
+    const { page = 1, perPage = 10 } = req.query;
+    const skip = (+page - 1) * +perPage;
+    if (!req.user) {
+        return next(createHttpError(401, "Unauthorized"))
+    }
+    const userId = req.user.id;
+
     try {
-        if (!req.user) return next(createHttpError(401, "Unauthorized"))
-        const userId = req.user.id;
+        // Lấy danh sách conversations với paginate
+        const conversations = await Conversation.paginate(
+            {
+                $or: [{ creator: userId }, { members: userId }],
+            },
+            {
+                page: +page,
+                limit: +perPage,
+                sort: '-updatedAt',
+                populate: [
+                    { path: 'creator', select: 'first_name last_name email avatar_url online_status' },
+                    { path: 'members', select: 'first_name last_name email avatar_url online_status' },
+                ],
+                lean: true
+            }
+        );
 
-        // Tìm kiếm user trong database bằng id
-        const user = await User.findById(userId);
+        // page = 1 => 1- 1 * 10 = 0 - (total = 7) = -7
+        // page = 2 => 1 * 10 = 10 - total = 3
+        // page = 3 => 2 * 10 = 20 = 13
 
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
+        // Nếu conversations < perPage, lấy danh sách friend để thêm vào conversations
+        if (conversations.docs.length < +perPage) {
+            let skip = (+page - 1) * +perPage - conversations.totalDocs
+            if (skip < 0) {
+                skip = 0
+            }
+            else {
+                skip++
+            }
+            const friends = await Friend.find({ user: userId })
+                .select('friend')
+                .populate({ path: 'friend', select: 'first_name last_name email avatar_url online_status' })
+                .limit((+perPage) - conversations.docs.length)
+                .lean();
+
+
+            // Thêm danh sách friend vào conversations
+            conversations.docs.push(...friends.map((f) => ({ ...f.friend, is_friend: true })));
         }
 
-        // Tìm kiếm các cuộc trò chuyện liên quan đến user này
-        const conversations = await Conversation.find({ members: userId }).populate('members', ['first_name', 'last_name', 'avatar_url']);
-        res.status(200).json(createResponse("Get conversation successfully", true, conversations));
-
+        return res.status(200).json(createResponse("Get conversation successfully", true, conversations));
     } catch (error) {
-        logger.error(error)
-
-        return next(createHttpError(500, "Server error!"))
-
+        console.error(error);
+        return next(createHttpError(500, "Server error"))
     }
-}
+};
 
 /**
  * delete member of conversation
@@ -152,9 +186,10 @@ const delMember = async (req: Request, res: Response, next: NextFunction) => {
         return next(createHttpError(500, "Server error!"))
     }
 }
+
 export {
     createConversation,
     updateMembers,
-    getConversationsByUser,
-    delMember
+    delMember,
+    getConversations
 }

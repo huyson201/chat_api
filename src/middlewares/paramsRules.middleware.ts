@@ -1,5 +1,8 @@
+import { NextFunction, Request, Response } from 'express';
 import { body, check, param, query } from 'express-validator'
-import mongoose from 'mongoose';
+import { validationResult } from 'express-validator';
+import createHttpError from 'http-errors';
+
 
 // define validator rules
 export const registerValidation = [
@@ -26,12 +29,6 @@ export const loginValidation = [
         .isEmail().withMessage('Email is not valid'),
     body('password')
         .notEmpty().withMessage('Password is required')
-]
-
-
-
-export const refreshTokenValidation = [
-    body('refresh_token').notEmpty().withMessage('Refresh token is required.'),
 ]
 
 
@@ -106,3 +103,23 @@ export const createMessageValidation = [
         .isMongoId().withMessage('conversation id must be a valid ObjectId'),
     body('content').notEmpty().withMessage('Content is required'),
 ];
+
+
+export const handleParamsValidationErrors = (req: Request, res: Response, next: NextFunction) => {
+    const errors = validationResult(req).formatWith((err) => {
+        return err.msg
+    })
+
+
+
+
+    if (!errors.isEmpty()) {
+        return next(createHttpError(400, {
+            message: "Bad request",
+            errors: errors.mapped()
+        }))
+    }
+
+    return next()
+
+}

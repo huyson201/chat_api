@@ -7,7 +7,8 @@ import createResponse from "@helpers/createResponse";
 import createHttpError from "http-errors";
 import dotenv from 'dotenv'
 import logger from '@helpers/logger';
-
+import addTokenToCookies from '@helpers/addTokenToCookie';
+import Friend from '@models/Fiend';
 dotenv.config()
 
 /**
@@ -35,8 +36,8 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         const token = createToken(newUser);
         newUser.token = token.refresh_token
         await newUser.save()
-        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
-        res.cookie("auth.refresh_token", token.access_token, { httpOnly: true })
+
+        addTokenToCookies(res, token)
 
         res.json(createResponse("Created!", true, { ...newUser.toJSON() }));
 
@@ -58,6 +59,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
  * @returns 
  */
 const login = async (req: Request, res: Response, next: NextFunction) => {
+
     const { email, password } = req.body;
     try {
 
@@ -84,8 +86,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         user.token = token.refresh_token
         await user.save()
 
-        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
-        res.cookie("auth.refresh_token", token.refresh_token, { httpOnly: true })
+        addTokenToCookies(res, token)
         res.json(createResponse("Login success!", true, { ...user.toJSON() }));
 
     } catch (error: any) {
@@ -127,8 +128,7 @@ const createNewToken = async (req: Request, res: Response, next: NextFunction) =
 
         user.token = token.refresh_token
         await user.save()
-        res.cookie("auth.access_token", token.access_token, { httpOnly: true })
-        res.cookie("auth.refresh_token", token.refresh_token, { httpOnly: true })
+        addTokenToCookies(res, token)
         return res.status(200).json(createResponse("Create new token success!", true));
     } catch (err) {
         logger.error(err)
@@ -198,22 +198,29 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
  * @returns 
  */
 const getFriends = async (req: Request, res: Response, next: NextFunction) => {
+    let { per_page = 10, page = 1 } = req.query
+
     try {
         if (!req.user) return next(createHttpError(401, "Unauthorized"))
-        const userId = req.user.id;
 
-        const user = await User.findById(userId).populate({
-            path: "friends",
-            select: "_id first_name last_name avatar_url online_status",
-            options: {
-                sort: { online_status: -1 }
-            }
-        });
-        if (!user) {
+
+        const friends = await Friend.paginate({ user: req.user.id }, {
+            page: +page,
+            limit: +per_page,
+            select: "friend",
+            populate: {
+                path: "friend",
+                select: "_id first_name last_name avatar_url online_status"
+            },
+            sort: { online_status: -1 }
+        })
+
+        if (!friends) {
             return next(createHttpError(404, "User not found"))
         }
 
-        return res.status(200).json(createResponse("Get friends success", true, user.friends))
+
+        return res.status(200).json(createResponse("Get friends success", true, friends))
     } catch (error) {
         logger.error(error)
 
@@ -249,18 +256,30 @@ const updateOnlineStatus = async (req: Request, res: Response, next: NextFunctio
     }
 }
 
+/**
+ * get list online friends
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const getOnlineFriends = async (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.user) {
             return next(createHttpError(401, 'Unauthorized'))
         }
 
-        const onlineFriends = await User.findById(req.user.id)
-            .populate({
-                path: "friends",
-                match: { online_status: 'online' },
-                select: "_id first_name last_name avatar_url online_status"
-            })
+        const friends = await Friend.find({ user: req.user.id }).populate({
+            path: "friend",
+            select: "_id first_name last_name avatar_url online_status",
+            match: { online_status: 'online' },
+        });
+
+        let onlineFriends = friends.map(friend => {
+            return friend.friend
+        })
+
+
         return res.json(createResponse("success", true, onlineFriends));
     } catch (err) {
         logger.error(err)

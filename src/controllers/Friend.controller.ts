@@ -5,6 +5,7 @@ import RequestFriend from '@models/RequestFriend';
 import User from '@models/User';
 // import { notificationsQueue } from '@queues/queue';
 import logger from '@helpers/logger';
+import Friend from '@models/Fiend';
 
 
 /**
@@ -103,23 +104,24 @@ const updateRequestStatus = async (req: Request, res: Response, next: NextFuncti
             return res.status(400).json({ success: false, message: "Request has already been responded" });
         }
 
+
         // Update the status of the friend request
         request.status = req.body.status;
         await request.save();
 
-        const requester = await User.findById(request.requester);
-        const recipient = await User.findById(request.recipient);
+
         // If the request was accepted, create a new friend record for both users
         if (request.status === "accepted") {
             // add friend to user
-            requester?.friends.push(recipient)
-            recipient?.friends.push(requester)
+            let requesterFriend = new Friend({ user: request.requester, friend: request.recipient })
+            let recipientFriend = new Friend({ user: request.recipient, friend: request.requester })
+
 
             // save to database
-            await Promise.all([requester?.save(), recipient?.save()])
+            await Promise.all([requesterFriend.save(), recipientFriend.save()])
 
             //create message of notification 
-            let notifyMessage = `${recipient!.first_name} ${recipient!.last_name} accepted your friend request`
+            // let notifyMessage = `${recipient!.first_name} ${recipient!.last_name} accepted your friend request`
 
             // send notification
             // notificationsQueue.add({
