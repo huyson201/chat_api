@@ -14,7 +14,7 @@ const createToken = (user: JwtPayload | IUser) => {
     let payload: JwtPayload = { id: user.id, email: user.email }
 
     let access_token = jwt.sign(payload, process.env.JWT_SECRET_KEY!, { expiresIn: '1d' });
-    let refresh_token = jwt.sign(payload, process.env.JWT_REFRESH_SECRET_KEY!);
+    let refresh_token = jwt.sign(payload, process.env.JWT_REFRESH_SECRET_KEY!, { expiresIn: '365d' });
 
     return {
         access_token,
