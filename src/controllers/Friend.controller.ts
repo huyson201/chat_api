@@ -5,7 +5,7 @@ import RequestFriend from '@models/RequestFriend';
 import User from '@models/User';
 // import { notificationsQueue } from '@queues/queue';
 import logger from '@helpers/logger';
-import Friend from '@models/Fiend';
+import Friend from '@models/Friend';
 
 
 /**

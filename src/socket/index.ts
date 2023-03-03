@@ -2,46 +2,83 @@ import jwt from 'jsonwebtoken';
 import { IConversation } from '@models/Conversation'
 import User, { IUser } from '@models/User'
 import { IMessageData } from '@queues/processor'
-import { messagesQueue } from '@queues/queue'
+// import { messagesQueue } from '@queues/queue'
 import { Server as HttpServer } from 'http'
 import { Server, Socket } from 'socket.io'
 import { JwtPayload } from '@helpers/createToken';
 import dotenv from 'dotenv'
 import { ExtendedError } from 'socket.io/dist/namespace';
 import messageHandler, { handleSendMessage } from './messageHandler';
+import Friend from '@models/Friend';
 dotenv.config()
 
+/**
+ * Authenticate socket fnc
+ * @param socket 
+ * @param next 
+ * @returns 
+ */
 const authenticateSocket = (socket: Socket, next: (err?: ExtendedError | undefined) => void) => {
-    let token = socket.handshake.auth.token
-    if (!token) return next(new Error("Unauthorized"))
+
+    if (!socket.request.headers.cookie) return next(new Error("Unauthorized"))
+
+    let objCookies: { [key: string]: string } = {}
+
+    socket.request.headers.cookie.split("; ").forEach(cookie => {
+        let splitCookie = cookie.split("=")
+        objCookies[splitCookie[0]] = splitCookie[1]
+    })
+
+    const access_token = objCookies[`auth.access_token`]
+    const refresh_token = objCookies[`auth.refresh_token`]
+    if (!access_token && refresh_token) return next(new Error("Unauthorized"))
 
     try {
-        let decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET_KEY!) as JwtPayload
-        socket.data.user = decoded
+        let decoded = jwt.verify(access_token, process.env.JWT_SECRET_KEY!) as JwtPayload
+        socket.data.auth = decoded
         return next()
     } catch (error) {
+        if (access_token && !refresh_token) {
+            return next(new Error("Unauthorized"))
+        }
         return next(new Error("Invalid token"))
     }
+
 }
 
-const notifyFriendOnline = (socket: Socket, userId: string, friends?: any[]) => {
-    if (!friends || friends.length === 0) return
-    friends.forEach(friend => {
-        if (onlineUsers[friend._id]) {
-            socket.to(onlineUsers[friend._id]).emit("friendOnline", { friendId: userId })
-        }
+const notifyFriendOnline = async (socket: Socket, onlineState: string, onlineUsers: { [key: string]: any }) => {
+
+    // notify to friends
+    let friends = await Friend.find({
+        user: socket.data.auth.id
+    }).populate({
+        path: "friend",
+        select: "_id first_name last_name email online_status",
+        match: { online_status: "online" }
     })
+
+
+    if (!friends || friends.length <= 0) return
+
+    let listFriendRooms = friends.filter(item => item.friend !== null).map(item => onlineUsers[item.friend._id.toString()] && onlineUsers[item.friend._id.toString()].socketId)
+    console.log(listFriendRooms)
+
+    if (listFriendRooms.length <= 0) return
+    socket.to(listFriendRooms).emit("friend_online", { userId: socket.data.auth.id, onlineState })
 }
+
+
 
 let io: Server
-const onlineUsers: { [key: string]: string } = {}
+const onlineUsers: { [key: string]: any } = {}
 
 const socketInit = async (httpServer: HttpServer) => {
-
     // create socket server
     io = new Server(httpServer, {
+        cookie: true,
         cors: {
-            origin: "*"
+            origin: ["*", "http://localhost:3000"],
+            credentials: true
         }
     })
 
@@ -51,66 +88,46 @@ const socketInit = async (httpServer: HttpServer) => {
     // register connection event
     io.on("connection", async (socket) => {
 
-        // defined online status time out
-        let onlineStatusTimeout: NodeJS.Timeout | null
+        // add user to list online user
+        let currUser = onlineUsers[socket.data.auth.id]
+        if (!currUser) {
+            onlineUsers[socket.data.auth.id] = {
+                socketId: socket.id,
+                isOnline: true
+            }
 
-        // get user
-        let user = await User.findById(socket.data.user.id)
-            .populate({
-                path: "friends",
-                match: { online_status: 'online' },
-                select: "_id first_name last_name avatar_url online_status"
-            })
-
-
-        // update online status
-        if (user) {
-            user.online_status = 'online'
-            await user.save()
-
-            // notify  user online to friends  
-            notifyFriendOnline(socket, user._id, user.friends)
-
+            // get user and  update online status
+            let user = await User.findOneAndUpdate({ _id: socket.data.auth.id }, { $set: { online_status: "online" } }, { new: true })
+            socket.emit("update_onlineStatus", "online", socket.id)
+            notifyFriendOnline(socket, "online", onlineUsers)
         }
 
+        onlineUsers[socket.data.auth.id] = {
+            socketId: socket.id,
+            isOnline: true
+        }
 
-        // storage socket id
-        onlineUsers[socket.data.user.id] = socket.id
-        console.log("----user::connection----");
-        console.log(onlineUsers)
-
-
-
-        // handle chat message
-        messageHandler(socket)
-
-        // Đăng ký sự kiện để lắng nghe disconnect event
+        //register disconnect event
         socket.on("disconnect", async () => {
-            delete onlineUsers[socket.data.user.id]
+            onlineUsers[socket.data.auth.id].isOnline = false
 
-            onlineStatusTimeout = setTimeout(async () => {
-                console.log("A user disconnected");
-                if (user) {
-                    user.online_status = "offline"
-                    await user.save()
+            setTimeout(async () => {
+                if (!onlineUsers[socket.data.auth.id].isOnline) {
+                    console.log("update offline")
+                    await User.updateOne({ _id: socket.data.auth.id }, {
+                        $set: {
+                            online_status: "offline"
+                        }
+                    })
+                    delete onlineUsers[socket.data.auth.id]
+                    notifyFriendOnline(socket, "offline", onlineUsers)
                 }
-            }, 10000)
+
+            }, 5000)
 
         });
 
-        // đăng ký sự kiện connect
-        socket.on("connect", () => {
-            // storage socket id
-            onlineUsers[socket.data.user.id] = socket.id
-            console.log("----user::connect----");
-            console.log(onlineUsers);
-
-
-            if (onlineStatusTimeout) {
-                clearTimeout(onlineStatusTimeout);
-                onlineStatusTimeout = null;
-            }
-        })
+        // messageHandler(socket)
 
 
     })

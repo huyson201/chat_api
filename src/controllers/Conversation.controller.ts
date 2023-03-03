@@ -1,7 +1,7 @@
 import createResponse from '@helpers/createResponse';
 import logger from '@helpers/logger';
 import Conversation from '@models/Conversation';
-import Friend from '@models/Fiend';
+import Friend from '@models/Friend';
 import User from '@models/User';
 import { NextFunction, Request, Response } from 'express';
 import createHttpError from 'http-errors';
@@ -140,24 +140,24 @@ const getConversations = async (req: Request, res: Response, next: NextFunction)
             // page = 2 => 1 * 10 = 10 - (vd: total = 7)  = 3
             // page = 3 => 2 * 10 = 20 - (vd: total = 7) = 13
 
-            let skip = (+page - 1) * +perPage - conversations.totalDocs
-            skip = skip <= 0 ? 0 : skip++
+            // let skip = (+page - 1) * +perPage - conversations.totalDocs
+            // skip = skip <= 0 ? 0 : skip++
 
             // lấy danh sách friend chưa có conversation với user
-            const friends = await Friend.find({ user: userId, friend: { $nin: conversationMembers } })
-                .select('friend')
-                .populate({ path: 'friend', select: 'first_name last_name email avatar_url online_status' })
-                .limit((+perPage) - conversations.docs.length)
-                .lean();
+            // const friends = await Friend.find({ user: userId, friend: { $nin: conversationMembers } })
+            //     .select('friend')
+            //     .populate({ path: 'friend', select: 'first_name last_name email avatar_url online_status' })
+            //     .limit((+perPage) - conversations.docs.length)
+            //     .lean();
 
 
-            if (!friends) {
-                return res.status(200).json(createResponse("Get conversation successfully", true, conversations));
+            // if (!friends) {
+            //     return res.status(200).json(createResponse("Get conversation successfully", true, conversations));
 
-            }
+            // }
 
             // Thêm danh sách friend vào conversations
-            conversations.docs.push(...friends.map((f) => ({ ...f.friend, is_friend: true })));
+            // conversations.docs.push(...friends.map((f) => ({ name: "", members: [{...f.friend}], createtor })));
         }
 
         return res.status(200).json(createResponse("Get conversation successfully", true, conversations));

@@ -14,7 +14,7 @@ export interface IConversation extends Document {
 const conversationSchema = new mongoose.Schema<IConversation>({
     name: {
         type: String,
-        required: true,
+        required: false,
     },
     is_group: {
         type: Boolean,

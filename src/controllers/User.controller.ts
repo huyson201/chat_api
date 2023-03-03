@@ -8,7 +8,7 @@ import createHttpError from "http-errors";
 import dotenv from 'dotenv'
 import logger from '@helpers/logger';
 import addTokenToCookies from '@helpers/addTokenToCookie';
-import Friend from '@models/Fiend';
+import Friend from '@models/Friend';
 dotenv.config()
 
 /**

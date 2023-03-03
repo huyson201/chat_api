@@ -7,6 +7,7 @@ import passport from 'passport';
 import cookieParser from 'cookie-parser'
 dotenv.config()
 
+
 const limiter = rateLimit({
     windowMs: 60 * 1000, // 1 phút
     max: 100, // Giới hạn 100 requests trong 1 phút
