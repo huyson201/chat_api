@@ -25,7 +25,9 @@ const friendSchema = new Schema<IFriend>(
     },
     { timestamps: true }
 );
-
+friendSchema.index({
+    user: 1, friend: 1
+})
 friendSchema.plugin(paginate)
 
 const Friend = model<IFriend, mongoose.PaginateModel<IFriend>>('Friend', friendSchema);

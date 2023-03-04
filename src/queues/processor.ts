@@ -15,7 +15,8 @@ export interface INotificationsData {
 export interface IMessageData {
     conversation: IConversation["_id"],
     message: string,
-    sender: IUser['_id']
+    sender: IUser['_id'],
+    to: IUser["_id"] | IUser["_id"][]
 }
 
 const notificationsProcessor = async (job: Job<INotificationsData>, done: DoneCallback) => {

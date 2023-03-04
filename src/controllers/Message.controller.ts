@@ -4,7 +4,7 @@ import Conversation from '@models/Conversation';
 import Message from '@models/Message';
 import { NextFunction, Request, Response } from 'express';
 import createHttpError from 'http-errors';
-import { isValidObjectId } from 'mongoose';
+import mongoose, { isValidObjectId } from 'mongoose';
 
 /**
  * create a message
@@ -47,20 +47,9 @@ const getMessageList = async (req: Request, res: Response, next: NextFunction) =
         const { conversationId } = req.params
         const { page, limit } = req.query;
 
-        // Kiểm tra conversationId có đúng định dạng ObjectId hay không
-        if (!isValidObjectId(conversationId)) {
-            return next(createHttpError(400, 'Invalid conversation ID'))
-        }
         // kiểm tra user
         if (!req.user) {
             return next(createHttpError(401, 'Unauthorized'))
-
-        }
-
-        // Tìm conversation cần truy cập
-        const conversation = await Conversation.findOne({ _id: conversationId, members: req.user.id });
-        if (!conversation) {
-            return res.status(404).json({ message: 'Conversation not found' });
         }
 
 
@@ -84,6 +73,8 @@ const getMessageList = async (req: Request, res: Response, next: NextFunction) =
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
+
 
 export {
     createMessage,

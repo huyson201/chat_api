@@ -6,6 +6,8 @@ import express, { Router, Request, Response } from 'express'
 const messageRouter: Router = express.Router()
 
 // Create new message
-messageRouter.post('/', createMessageValidation, authenticate(), createMessage);
+messageRouter.post('/', createMessageValidation, createMessage);
+// messageRouter.get("/")
+
 
 export default messageRouter

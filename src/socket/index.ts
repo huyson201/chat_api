@@ -112,11 +112,12 @@ const socketInit = async (httpServer: HttpServer) => {
             onlineUsers[socket.data.auth.id].isOnline = false
 
             setTimeout(async () => {
-                if (!onlineUsers[socket.data.auth.id].isOnline) {
+                if (onlineUsers[socket.data.auth.id] && !onlineUsers[socket.data.auth.id].isOnline) {
                     console.log("update offline")
                     await User.updateOne({ _id: socket.data.auth.id }, {
                         $set: {
-                            online_status: "offline"
+                            online_status: "offline",
+                            last_online: Date.now()
                         }
                     })
                     delete onlineUsers[socket.data.auth.id]
@@ -127,7 +128,7 @@ const socketInit = async (httpServer: HttpServer) => {
 
         });
 
-        // messageHandler(socket)
+        messageHandler(socket)
 
 
     })
@@ -135,6 +136,7 @@ const socketInit = async (httpServer: HttpServer) => {
 }
 
 export {
-    io
+    io,
+    onlineUsers
 }
 export default socketInit;

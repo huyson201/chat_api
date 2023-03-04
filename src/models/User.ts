@@ -11,11 +11,11 @@ export interface IUser extends Document {
     password: string
     token?: string
     avatar_url?: string;
-    online_status: 'online' | 'offline'
+    online_status: 'online' | 'offline',
+    last_online?: Date
     googleId?: string
     createdAt?: Date;
     updatedAt?: Date;
-
 }
 
 interface IFindOrCreate<T> extends Model<T> {
@@ -38,6 +38,7 @@ const UserSchema = new Schema<IUser, IFindOrCreate<IUser>>({
         type: String,
         required: true,
         unique: true,
+        index: true
     },
     password: {
         type: String,
@@ -45,6 +46,10 @@ const UserSchema = new Schema<IUser, IFindOrCreate<IUser>>({
     },
     avatar_url: {
         type: String,
+        required: false
+    },
+    last_online: {
+        type: Date,
         required: false
     },
     online_status: {
@@ -78,7 +83,8 @@ const UserSchema = new Schema<IUser, IFindOrCreate<IUser>>({
     }
 });
 
-
+UserSchema.index({ email: 1 }, { unique: true })
+UserSchema.index({ online_status: -1 })
 // Hash password before saving to database
 UserSchema.pre('save', async function (next) {
     const user = this;

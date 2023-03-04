@@ -27,6 +27,9 @@ const messageSchema = new mongoose.Schema<IMessage>({
     }
 }, { timestamps: true });
 
+messageSchema.index({
+    createAt: -1, conversation: 1
+})
 messageSchema.plugin(paginate)
 const Message = mongoose.model<IMessage, mongoose.PaginateModel<IMessage>>('Message', messageSchema);
 
