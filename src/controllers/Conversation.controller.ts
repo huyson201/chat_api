@@ -208,9 +208,29 @@ const delMember = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+const getConversation = async (req: Request, res: Response, next: NextFunction) => {
+    let conversationId = req.params.conversationId
+
+    try {
+        let conversation = await Conversation.findById(conversationId, {
+            populate: [
+                { path: 'creator', select: 'first_name last_name email avatar_url online_status' },
+                { path: 'members', select: 'first_name last_name email avatar_url online_status' },
+                { path: "lastMessage", select: "sender content" }
+            ],
+        })
+
+        return res.status(200).json(createResponse("Get successfully", true, conversation))
+    } catch (error) {
+        logger.error(error)
+        return next(createHttpError(500, "Server Error!"))
+    }
+}
+
 export {
     createConversation,
     updateMembers,
     delMember,
-    getConversations
+    getConversations,
+    getConversation
 }

@@ -9,6 +9,8 @@ import dotenv from 'dotenv'
 import logger from '@helpers/logger';
 import addTokenToCookies from '@helpers/addTokenToCookie';
 import Friend from '@models/Friend';
+import Conversation from '@models/Conversation';
+import RequestFriend from '@models/RequestFriend';
 dotenv.config()
 
 /**
@@ -204,23 +206,22 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
         if (!req.user) return next(createHttpError(401, "Unauthorized"))
 
 
-        const friends = await Friend.paginate({ user: req.user.id }, {
-            page: +page,
-            limit: +per_page,
-            select: "friend",
-            populate: {
+        const friends = await Friend.find({ user: req.user.id })
+            .populate({
                 path: "friend",
-                select: "_id first_name last_name avatar_url online_status"
-            },
-            sort: { online_status: -1 }
-        })
+                select: "_id first_name last_name avatar_url online_status",
+                options: {
+                    sort: { first_name: 1 }
+                }
+            })
+            .select("friend").lean()
 
-        if (!friends) {
-            return next(createHttpError(404, "User not found"))
-        }
-
-
-        return res.status(200).json(createResponse("Get friends success", true, friends))
+        // populate: {
+        //     path: "friend",
+        //     select: "_id first_name last_name avatar_url online_status"
+        // },
+        let listFriends = friends.map(fr => fr.friend)
+        return res.status(200).json(createResponse("Get friends success", true, listFriends))
     } catch (error) {
         logger.error(error)
 
@@ -229,6 +230,36 @@ const getFriends = async (req: Request, res: Response, next: NextFunction) => {
     }
 }
 
+/**
+ * Get user's list groups 
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
+const getGroups = async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return next(createHttpError(401, "Unauthorized"))
+    }
+
+    const userId = req.user.id;
+
+    try {
+        // Lấy danh sách conversations với paginate
+        const conversations = await Conversation.find({ members: userId, is_group: true })
+            .populate([
+                { path: 'creator', select: 'first_name last_name email avatar_url online_status' },
+                { path: 'members', select: 'first_name last_name email avatar_url online_status' }
+            ]).sort("-updatedAt").lean()
+
+        return res.status(200).json(createResponse("Get successfully", true, conversations))
+
+    }
+    catch (err) {
+        logger.error(err)
+        return next(createHttpError(500, "Internal server error"))
+    }
+}
 /**
  * update online status
  * @param req 
@@ -251,8 +282,8 @@ const updateOnlineStatus = async (req: Request, res: Response, next: NextFunctio
 
         return res.send(updatedUser);
     } catch (err) {
-        console.error(err);
-        return res.status(500).send({ message: 'Server error' });
+        logger.error(err)
+        return next(createHttpError(500, "Internal server error"))
     }
 }
 
@@ -288,6 +319,33 @@ const getOnlineFriends = async (req: Request, res: Response, next: NextFunction)
 }
 
 
+const getRequestFriends = async (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+        return next(createHttpError(401, "Unauthorized"))
+    }
+
+    const userId = req.user.id;
+
+    try {
+        let request = await RequestFriend.find({ recipient: userId, status: "pending" })
+            .populate([
+                {
+                    path: "requester",
+                    select: "_id first_name last_name avatar_url online_status"
+                },
+                {
+                    path: "recipient",
+                    select: "_id first_name last_name avatar_url online_status"
+                }
+            ]).sort("-createdAt")
+
+        return res.status(200).json(createResponse("Get successfully", true, request))
+    } catch (error) {
+        logger.error(error)
+        return next(createHttpError(500, "Internal server error"))
+    }
+}
+
 export {
     register,
     login,
@@ -296,5 +354,7 @@ export {
     logout,
     getFriends,
     updateOnlineStatus,
-    getOnlineFriends
+    getOnlineFriends,
+    getGroups,
+    getRequestFriends
 }

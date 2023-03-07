@@ -5,6 +5,7 @@ export interface IRequestFriend extends Document {
     requester: IUser["_id"];
     recipient: IUser["_id"];
     status: "pending" | "accepted" | "rejected";
+    request_text?: string
     createdAt: Date;
     updatedAt: Date;
 }
@@ -20,6 +21,10 @@ const RequestFriendSchema: Schema<IRequestFriend> = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
+        },
+        request_text: {
+            type: String,
+            required: false
         },
         status: {
             type: String,

@@ -1,5 +1,5 @@
 import express, { Router } from 'express'
-import { createConversation, delMember, updateMembers } from '@controllers/Conversation.controller';
+import { createConversation, delMember, getConversation, updateMembers } from '@controllers/Conversation.controller';
 import { getMessageList } from '@controllers/Message.controller';
 import authenticate from '@middlewares/auth.middleware';
 import {
@@ -39,6 +39,7 @@ conversationRouter.put('/:id/members', updateMembersValidation, updateMembers);
 
 // get list message of conversation
 conversationRouter.get('/:conversationId/messages', getConversationMessagesValidator, passport.authenticate("jwt", { session: false }), getMessageList);
+conversationRouter.get('/:conversationId', getConversation);
 
 conversationRouter.delete('/:conversationId/leave', leaveConversationValidator, authenticate(), delMember);
 

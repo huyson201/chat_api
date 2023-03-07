@@ -49,12 +49,14 @@ const messageHandler = async (socket: Socket) => {
 
         console.log("sendMessage_____")
 
-        if (!Array.isArray(to) && onlineUsers[to._id]) {
-            io.to([onlineUsers[to._id].socketId, socket.id]).emit("receiveMessage", msg)
+        if (!Array.isArray(to)) {
+            let sendTo = [socket.id]
+            if (onlineUsers[to._id]) sendTo.push(onlineUsers[to._id])
+            io.to(sendTo).emit("receiveMessage", msg)
             console.log("emit receiveMessage")
         }
         else {
-            io.to(conversation._id).emit("receiveMessage", message)
+            io.to(conversation._id).emit("receiveMessage", msg)
         }
         // add tin nhắn vào queue
         // messagesQueue.add({
@@ -67,11 +69,14 @@ const messageHandler = async (socket: Socket) => {
     // Đăng ký sự kiện để join vào conversation
     socket.on("joinConversation", (conversation: IConversation) => {
         socket.join(conversation._id);
+        console.log("joinRoom: " + conversation._id)
     });
 
     // Đăng ký sự kiện để leave conversation
     socket.on("leaveConversation", (conversation: IConversation) => {
         socket.leave(conversation._id);
+        console.log("leaveRoom: " + conversation._id)
+
     });
 }
 
