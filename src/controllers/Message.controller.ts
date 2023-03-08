@@ -67,10 +67,10 @@ const getMessageList = async (req: Request, res: Response, next: NextFunction) =
         );
 
         // Trả về kết quả
-        res.status(200).json(createResponse("success", true, result));
+        return res.status(200).json(createResponse("success", true, result));
     } catch (error) {
         logger.error(error)
-        res.status(500).json({ message: 'Internal server error' });
+        return next(createHttpError(500, 'Internal server error'))
     }
 };
 
