@@ -16,6 +16,8 @@ export interface IMessageData {
     conversation: IConversation["_id"],
     message: string,
     sender: IUser['_id'],
+    contentType?: "file" | "text" | "image",
+    fileUrl?: string
     to: IUser["_id"] | IUser["_id"][]
 }
 

@@ -6,12 +6,9 @@ import passport from 'passport';
 
 const friendRouter: Router = express.Router()
 
-friendRouter.post("/requests", createRequestValidation, authenticate(), requestFriend)
+friendRouter.post("/requests", createRequestValidation, passport.authenticate("jwt", { session: false }), requestFriend)
 
-friendRouter.get('/requests', passport.authenticate("jwt", { session: false }), getRequestFriends)
-
-// Route to update friend request status
-friendRouter.put("/requests/:id", updateRequestValidation, authenticate(), updateRequestStatus);
+friendRouter.put("/requests/:id", updateRequestValidation, passport.authenticate("jwt", { session: false }), updateRequestStatus);
 
 
 export default friendRouter

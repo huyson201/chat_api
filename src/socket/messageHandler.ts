@@ -30,12 +30,15 @@ export const handleSendMessage = async ({ conversation, message, sender, to }: I
 const messageHandler = async (socket: Socket) => {
 
     // đăng ký sự kiện gửi tin nhắn
-    socket.on("sendMessage", async ({ conversation, message, sender, to }: IMessageData) => {
+    socket.on("sendMessage", async ({ conversation, fileUrl, contentType, message, sender, to }: IMessageData) => {
 
         let msg = new Message({
             conversation: conversation._id,
             sender: sender._id,
-            content: message
+            content: message,
+            contentType,
+            fileUrl
+
         })
         await msg.save()
 
@@ -52,8 +55,8 @@ const messageHandler = async (socket: Socket) => {
         if (!Array.isArray(to)) {
             let sendTo = [socket.id]
             if (onlineUsers[to._id]) sendTo.push(onlineUsers[to._id])
-            io.to(sendTo).emit("receiveMessage", msg)
-            console.log("emit receiveMessage")
+            io.emit("receiveMessage", { ...msg.toJSON(), sender: sender }, sendTo)
+
         }
         else {
             io.to(conversation._id).emit("receiveMessage", msg)

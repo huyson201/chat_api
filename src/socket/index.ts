@@ -61,7 +61,6 @@ const notifyFriendOnline = async (socket: Socket, onlineState: string, onlineUse
     if (!friends || friends.length <= 0) return
 
     let listFriendRooms = friends.filter(item => item.friend !== null).map(item => onlineUsers[item.friend._id.toString()] && onlineUsers[item.friend._id.toString()].socketId)
-    console.log(listFriendRooms)
 
     if (listFriendRooms.length <= 0) return
     socket.to(listFriendRooms).emit("friend_online", { userId: socket.data.auth.id, onlineState })
@@ -109,7 +108,9 @@ const socketInit = async (httpServer: HttpServer) => {
 
         //register disconnect event
         socket.on("disconnect", async () => {
-            onlineUsers[socket.data.auth.id].isOnline = false
+            if (onlineUsers[socket.data.auth.id]) {
+                onlineUsers[socket.data.auth.id].isOnline = false
+            }
 
             setTimeout(async () => {
                 if (onlineUsers[socket.data.auth.id] && !onlineUsers[socket.data.auth.id].isOnline) {

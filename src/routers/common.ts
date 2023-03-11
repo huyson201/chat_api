@@ -1,8 +1,26 @@
+import { uploadFile } from '@controllers/Common.controller';
 import createResponse from '@helpers/createResponse'
 import logger from '@helpers/logger';
 import express, { Router, Request, Response, NextFunction } from 'express'
 import createHttpError from 'http-errors';
 import { getLinkPreview } from "link-preview-js";
+import multer from 'multer'
+
+const upload = multer({
+    limits: {
+        fileSize: 10 * 1024 * 1024
+    },
+    storage: multer.diskStorage({
+        destination(req, file, callback) {
+            callback(null, './upload')
+        },
+        filename(req, file, callback) {
+            callback(null, file.originalname)
+        },
+    })
+
+
+})
 const commonRouter: Router = express.Router()
 
 commonRouter.get("/", (req: Request, res: Response) => {
@@ -33,5 +51,6 @@ commonRouter.get("/api/link-review", async (req: Request, res: Response, next: N
     }
 })
 
+commonRouter.post("/api/file-upload", upload.single("file"), uploadFile)
 
 export default commonRouter

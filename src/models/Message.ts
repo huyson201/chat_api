@@ -6,6 +6,8 @@ export interface IMessage extends Document {
     conversation: IConversation["_id"];
     sender: IUser["_id"];
     content: string;
+    contentType: "image" | "text" | "file"
+    fileUrl?: string
     createdAt: Date;
     updatedAt: Date;
 }
@@ -24,6 +26,16 @@ const messageSchema = new mongoose.Schema<IMessage>({
     content: {
         type: String,
         required: true,
+    },
+    contentType: {
+        type: String,
+        enum: ["image", "text", "file"],
+        required: true,
+        default: "text"
+    },
+    fileUrl: {
+        type: String,
+        required: false
     }
 }, { timestamps: true });
 

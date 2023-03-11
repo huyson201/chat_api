@@ -17,7 +17,7 @@ import Friend from '@models/Friend';
  */
 const requestFriend = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { recipientId } = req.body;
+        const { recipientId, request_text } = req.body;
 
         if (!req.user) return next(createHttpError(401, "Unauthorized"));
         const requester = req.user.id;
@@ -29,7 +29,7 @@ const requestFriend = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         // Tạo request friend mới
-        const newRequest = new RequestFriend({ requester, recipient: recipientId });
+        const newRequest = new RequestFriend({ requester, recipient: recipientId, request_text });
         await newRequest.save();
 
         // Tạo notification

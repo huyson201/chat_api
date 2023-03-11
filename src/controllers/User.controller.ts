@@ -319,6 +319,13 @@ const getOnlineFriends = async (req: Request, res: Response, next: NextFunction)
 }
 
 
+/**
+ *  get user's list request friend
+ * @param req 
+ * @param res 
+ * @param next 
+ * @returns 
+ */
 const getRequestFriends = async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
         return next(createHttpError(401, "Unauthorized"))
@@ -346,6 +353,47 @@ const getRequestFriends = async (req: Request, res: Response, next: NextFunction
     }
 }
 
+const findByEmail = async (req: Request, res: Response, next: NextFunction) => {
+    const { email } = req.query;
+
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json(createHttpError(404, "User not found"));
+        }
+        let isFriend: boolean = false
+        let isRequested: boolean = false
+
+        if (user._id === req.user?.id) {
+            isFriend = true
+            isRequested = true
+        } else {
+            let friend = await Friend.findOne({ user: req.user?.id, friend: user._id })
+            if (friend) {
+                isFriend = true
+                isFriend = true
+                isRequested = true
+            }
+        }
+
+        if (!isRequested) {
+            let request = await RequestFriend.findOne({
+                requester: req.user?.id,
+                recipient: user._id,
+                status: "pending"
+            })
+
+            if (request) {
+                isRequested = true
+            }
+        }
+
+        return res.status(200).json(createResponse("find success", true, { ...user.toJSON(), isFriend, isRequested }));
+    } catch (err) {
+        return res.status(500).json(createHttpError(500, "server error"));
+    }
+}
+
 export {
     register,
     login,
@@ -356,5 +404,6 @@ export {
     updateOnlineStatus,
     getOnlineFriends,
     getGroups,
-    getRequestFriends
+    getRequestFriends,
+    findByEmail
 }

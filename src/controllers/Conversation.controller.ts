@@ -216,7 +216,7 @@ const getConversation = async (req: Request, res: Response, next: NextFunction) 
             populate: [
                 { path: 'creator', select: 'first_name last_name email avatar_url online_status' },
                 { path: 'members', select: 'first_name last_name email avatar_url online_status' },
-                { path: "lastMessage", select: "sender content" }
+                { path: "lastMessage" }
             ],
         })
 

@@ -45,26 +45,18 @@ const createMessage = async (req: Request, res: Response, next: NextFunction) =>
 const getMessageList = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { conversationId } = req.params
-        const { page, limit } = req.query;
+        // const { page, limit } = req.query;
 
         // kiểm tra user
         if (!req.user) {
             return next(createHttpError(401, 'Unauthorized'))
         }
 
-
-        const options = {
-            page: page ? Number(page) : 1,  // Trang hiện tại
-            limit: limit ? Number(limit) : 10,  // Số lượng tin nhắn trên mỗi trang
-            populate: 'sender',  // Lấy thông tin người gửi
-            sort: '-createdAt',
-        };
-
         // Tìm kiếm và phân trang tin nhắn
-        const result = await Message.paginate(
-            { conversation: conversationId },
-            options
-        );
+        const result = await Message.find({ conversation: conversationId }).populate({
+            path: "sender",
+            select: "first_name last_name email online_status last_online"
+        })
 
         // Trả về kết quả
         return res.status(200).json(createResponse("success", true, result));

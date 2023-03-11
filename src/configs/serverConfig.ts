@@ -22,10 +22,9 @@ const serverConfig = (app: Express) => {
         origin: "http://localhost:3000"
     }))
     app.use(express.json())
-    app.use(express.urlencoded({ extended: false }))
+    app.use(express.urlencoded({ extended: true }))
     app.use(cookieParser('cookies'))
     app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
-
     // app.use(limiter)
     app.use(passport.initialize())
 }
