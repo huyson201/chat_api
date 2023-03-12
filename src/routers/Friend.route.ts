@@ -1,6 +1,5 @@
 import { createRequestValidation, updateRequestValidation } from './../middlewares/paramsRules.middleware';
 import { getRequestFriends, requestFriend, updateRequestStatus } from '@controllers/Friend.controller'
-import authenticate from '@middlewares/auth.middleware'
 import express, { Router } from 'express'
 import passport from 'passport';
 

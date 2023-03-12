@@ -9,7 +9,7 @@ const uploadFile = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
         let data = await uploadToCloud(req.file)
-        console.log(data)
+        fs.unlinkSync(req.file.path)
         return res.status(200).json(createResponse("upload success", true, {
             fileUrl: data.url,
             original_filename: data.original_filename,

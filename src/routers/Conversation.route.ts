@@ -15,7 +15,7 @@ const conversationRouter: Router = express.Router()
 
 
 // Define createConversation API endpoint
-conversationRouter.post('/', conversationValidation, createConversation);
+conversationRouter.post('/', passport.authenticate("jwt", { session: false }), conversationValidation, createConversation);
 conversationRouter.get("/:userId", async (req: any, res: any, next: any) => {
     let conversations = await Conversation.paginate({
         $or: [{ creator: req.params.userId }, { members: req.params.userId }],

@@ -33,10 +33,6 @@ export const loginValidation = [
 
 
 export const conversationValidation = [
-    // check creator_id field
-    body('creator_id')
-        .exists({ checkFalsy: true }).withMessage('Creator ID is required')
-        .isMongoId().withMessage('Creator ID must be a valid ObjectId'),
     // check members field
     body('members')
         .exists({ checkFalsy: true }).withMessage('Members are required')
